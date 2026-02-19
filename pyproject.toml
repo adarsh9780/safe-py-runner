@@ -1,0 +1,54 @@
+[project]
+name = "safe-py-runner"
+version = "0.1.0"
+description = "Restricted Python execution runner with subprocess isolation, timeout, memory caps, and import/global controls"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "Adarsh Maurya", email = "adarsh@example.com" },
+]
+keywords = ["security", "sandbox", "subprocess", "agent", "llm", "code-execution"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Security",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+  "RestrictedPython>=7.4",
+]
+
+[project.urls]
+Homepage = "https://github.com/adarsh9780/safe-py-runner"
+Repository = "https://github.com/adarsh9780/safe-py-runner.git"
+Issues = "https://github.com/adarsh9780/safe-py-runner/issues"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0.0",
+  "ruff>=0.3.0",
+  "mypy>=1.9.0",
+]
+
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/safe_py_runner"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true

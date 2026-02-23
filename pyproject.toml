@@ -1,14 +1,19 @@
 [project]
 name = "safe-py-runner"
-version = "0.1.0"
+version = "0.1.1"
 description = "Restricted Python execution runner with subprocess isolation, timeout, memory caps, and import/global controls"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-authors = [
-  { name = "Adarsh Maurya", email = "adarsh@example.com" },
+authors = [{ name = "Adarsh Maurya", email = "adarsh@example.com" }]
+keywords = [
+  "security",
+  "sandbox",
+  "subprocess",
+  "agent",
+  "llm",
+  "code-execution",
 ]
-keywords = ["security", "sandbox", "subprocess", "agent", "llm", "code-execution"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
@@ -17,9 +22,7 @@ classifiers = [
   "Topic :: Security",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dependencies = [
-  "RestrictedPython>=7.4",
-]
+dependencies = ["RestrictedPython>=7.4"]
 
 [project.urls]
 Homepage = "https://github.com/adarsh9780/safe-py-runner"
@@ -27,11 +30,7 @@ Repository = "https://github.com/adarsh9780/safe-py-runner.git"
 Issues = "https://github.com/adarsh9780/safe-py-runner/issues"
 
 [project.optional-dependencies]
-dev = [
-  "pytest>=8.0.0",
-  "ruff>=0.3.0",
-  "mypy>=1.9.0",
-]
+dev = ["pytest>=8.0.0", "ruff>=0.3.0", "mypy>=1.9.0"]
 
 [build-system]
 requires = ["hatchling>=1.25.0"]

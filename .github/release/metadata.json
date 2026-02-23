@@ -1,4 +1,4 @@
 {
   "title": "safe-py-runner {{tag}}",
-  "description": "Release notes for {{tag}}.\n\n- Summarize key changes here.\n- Add migration notes if any."
+  "description": "Release notes for {{tag}}.\n\n- Added GitHub Actions CI trigger for pushes and PRs to `main`.\n- Added tag-based release workflow (`v*`) to build wheel artifacts and publish a GitHub Release.\n- Added markdown-driven release metadata generator (`scripts/generate_release_metadata.py`).\n- Added `.github/release/metadata.json` as workflow input generated from markdown.\n- Updated `.gitignore` to ignore Python bytecode/cache files and local `release_metadata.md`.\n- Updated README with release automation and metadata generation steps."
 }

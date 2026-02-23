@@ -82,20 +82,77 @@ Contributions are welcome! Please open an issue or PR on GitHub.
 
 ## CI and Release Automation
 
-- Push to `master`: runs CI tests automatically via GitHub Actions.
+- Push to `main`: runs CI tests automatically via GitHub Actions.
 - Push a tag like `v0.1.1`: builds a wheel and creates a GitHub Release with the wheel attached.
 
 Release title/description are read from:
 
 - `.github/release/metadata.json`
 
-Example format:
+Example `release_metadata.md`:
 
-```json
-{
-  "title": "safe-py-runner {{tag}}",
-  "description": "Release notes for {{tag}}.\n\n- Summarize key changes here."
-}
+```md
+# safe-py-runner {{tag}}
+
+Release notes for {{tag}}.
+
+- Summarize key changes here.
+- Add migration notes if any.
 ```
 
-`{{tag}}` is replaced automatically with the pushed tag name.
+`{{tag}}` is replaced automatically with the pushed tag name by the release workflow.
+
+## Release Steps (Contributors)
+
+Step 1: Update `release_metadata.md` in project root (this file is local and gitignored).
+
+Step 2: Run metadata generator:
+
+```bash
+uv run python scripts/generate_release_metadata.py
+```
+
+Step 3: Bump version in `pyproject.toml` (for example `0.1.0` -> `0.1.1`).
+
+Step 4: Run tests locally:
+
+```bash
+uv run --extra dev pytest
+```
+
+Step 5: Commit and push changes to `main` (including `.github/release/metadata.json`).
+
+Step 6: Create and push release tag:
+
+```bash
+git tag -a v0.1.1 -m "Release v0.1.1"
+git push origin v0.1.1
+```
+
+Step 7: Verify GitHub Actions release workflow succeeded and wheel is attached to the GitHub Release.
+
+## Test and Push Steps (Contributors)
+
+Step 1: Run tests locally:
+
+```bash
+uv run --extra dev pytest
+```
+
+Step 2: Stage files:
+
+```bash
+git add .
+```
+
+Step 3: Commit:
+
+```bash
+git commit -m "Describe your change"
+```
+
+Step 4: Push to `main`:
+
+```bash
+git push origin main
+```

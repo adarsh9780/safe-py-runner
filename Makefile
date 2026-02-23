@@ -4,7 +4,7 @@ VERSION ?=
 POS_VERSION := $(word 2,$(MAKECMDGOALS))
 EFFECTIVE_VERSION := $(if $(VERSION),$(VERSION),$(POS_VERSION))
 
-.PHONY: help help-push help-release help-tag check-message check-version check-version-different-from-pyproject check-no-version-arg check-pyproject-version check-tag-not-latest set-version metadata test git-add git-commit git-push git-tag push release
+.PHONY: help help-push help-release help-tag check-message check-version check-input-version check-version-different-from-pyproject check-no-version-arg check-pyproject-version check-tag-not-latest set-version metadata test git-add git-commit git-push git-tag push release
 
 help:
 	@echo "Usage:"
@@ -30,6 +30,7 @@ help:
 	@echo "  git-push      Push current branch to origin main"
 	@echo "  git-tag       Create and push release tag using pyproject.toml version"
 	@echo "  set-version   Update pyproject.toml project version"
+	@echo "  check-version Validate current version in pyproject.toml"
 	@echo "  test          Run test suite"
 	@echo "  push          Validate message, test, commit, and push to main"
 	@echo "  release       Bump version, regenerate metadata, test, commit, push, and tag"
@@ -79,11 +80,16 @@ check-message:
 		exit 1; \
 	fi
 
-check-version:
+check-input-version:
 	@test -n "$(EFFECTIVE_VERSION)" || (echo "Usage: make set-version X.Y.Z"; exit 1)
 	@echo "$(EFFECTIVE_VERSION)" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$$' || (echo "Version must be X.Y.Z"; exit 1)
 
-check-version-different-from-pyproject: check-version
+check-version:
+	@$(MAKE) --no-print-directory check-no-version-arg
+	@$(MAKE) --no-print-directory check-pyproject-version
+	@echo "pyproject.toml version is valid."
+
+check-version-different-from-pyproject: check-input-version
 	@pyproject_version="$$(sed -n 's/^version = "\([^"]*\)"/\1/p' pyproject.toml | head -n1)"; \
 	if [ "$$pyproject_version" = "$(EFFECTIVE_VERSION)" ]; then \
 		echo "Requested version $(EFFECTIVE_VERSION) is already set in pyproject.toml."; \
@@ -108,7 +114,7 @@ check-tag-not-latest: check-no-version-arg check-pyproject-version
 		exit 1; \
 	fi
 
-set-version: check-version check-version-different-from-pyproject
+set-version: check-input-version check-version-different-from-pyproject
 	uv run python scripts/set_version.py --version "$(EFFECTIVE_VERSION)"
 
 metadata:

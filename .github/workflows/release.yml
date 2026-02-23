@@ -7,10 +7,12 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+    environment: pypi
 
     steps:
       - name: Checkout
@@ -25,7 +27,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install build
-          python -m build --wheel
+          python -m build
 
       - name: Read release metadata
         id: metadata
@@ -37,4 +39,9 @@ jobs:
         with:
           name: ${{ steps.metadata.outputs.title }}
           body: ${{ steps.metadata.outputs.body }}
-          files: dist/*.whl
+          files: dist/*
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/

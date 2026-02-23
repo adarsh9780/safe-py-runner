@@ -83,11 +83,17 @@ Contributions are welcome! Please open an issue or PR on GitHub.
 ## CI and Release Automation
 
 - Push to `main`: runs CI tests automatically via GitHub Actions.
-- Push a tag like `v0.1.1`: builds a wheel and creates a GitHub Release with the wheel attached.
+- Push a tag like `v0.1.1`: builds `sdist` + wheel, creates a GitHub Release, and publishes to PyPI via Trusted Publishing.
 
 Release title/description are read from:
 
 - `.github/release/metadata.json`
+
+Trusted Publishing configuration expected by this repo:
+
+- workflow name: `release`
+- workflow file: `.github/workflows/release.yml`
+- GitHub environment: `pypi`
 
 Example `release_metadata.md`:
 

@@ -1,8 +1,8 @@
 [project]
 name = "safe-py-runner"
-version = "0.1.4"
+version = "0.1.5"
 description = "Restricted Python execution runner with subprocess isolation, timeout, memory caps, and import/global controls"
-readme = "README.md"
+readme = "README_PYPI.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Adarsh Maurya", email = "adarsh.x.maurya@gmail.com" }]

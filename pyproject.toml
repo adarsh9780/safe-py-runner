@@ -1,6 +1,6 @@
 [project]
 name = "safe-py-runner"
-version = "0.1.3"
+version = "0.1.4"
 description = "Restricted Python execution runner with subprocess isolation, timeout, memory caps, and import/global controls"
 readme = "README.md"
 requires-python = ">=3.11"

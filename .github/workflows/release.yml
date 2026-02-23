@@ -1,0 +1,58 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build wheel
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+          python -m build --wheel
+
+      - name: Read release metadata
+        id: metadata
+        run: |
+          python - <<'PY'
+          import json
+          import os
+
+          tag = os.environ["GITHUB_REF_NAME"]
+          metadata_file = ".github/release/metadata.json"
+
+          with open(metadata_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+          title = data["title"].replace("{{tag}}", tag)
+          description = data["description"].replace("{{tag}}", tag)
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+            out.write(f"title={title}\\n")
+            out.write("body<<EOF\\n")
+            out.write(description)
+            out.write("\\nEOF\\n")
+          PY
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.metadata.outputs.title }}
+          body: ${{ steps.metadata.outputs.body }}
+          files: dist/*.whl

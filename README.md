@@ -79,3 +79,23 @@ It uses Python runtime hooks and resource limits to prevent accidents and basic 
 ## Contributing
 
 Contributions are welcome! Please open an issue or PR on GitHub.
+
+## CI and Release Automation
+
+- Push to `master`: runs CI tests automatically via GitHub Actions.
+- Push a tag like `v0.1.1`: builds a wheel and creates a GitHub Release with the wheel attached.
+
+Release title/description are read from:
+
+- `.github/release/metadata.json`
+
+Example format:
+
+```json
+{
+  "title": "safe-py-runner {{tag}}",
+  "description": "Release notes for {{tag}}.\n\n- Summarize key changes here."
+}
+```
+
+`{{tag}}` is replaced automatically with the pushed tag name.

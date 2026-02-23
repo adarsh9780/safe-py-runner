@@ -1,5 +1,6 @@
 dist
 .venv
 .pytest_cache
-.github
-src/safe_py_runner/__pycache__/*
+__pycache__/
+*.py[cod]
+*$py.class

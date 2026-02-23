@@ -3,7 +3,7 @@
 ## Commit & Testing Procedures
 
 1. Always update the `commit_message` file in the root directory whenever a change is made.
-2. Overwrite the file if the previous git commit message doesn't match the current content of the `commit_message`; otherwise, append the new changes.
+2. If the previous git commit message matches the current content of the `commit_message`, overwrite the file; otherwise, append the new changes.
 3. For every bug and feature we add or report, create a dedicated test case to prevent regressions.
 
 ## Environment & Communication

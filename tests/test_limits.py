@@ -1,10 +1,9 @@
-import time
-import pytest
 import sys
+import pytest
 from safe_py_runner import RunnerPolicy, run_code
 
 
-def test_timeout_enforcement():
+def test_timeout_enforcement() -> None:
     """Verify that code taking longer than timeout is killed."""
     policy = RunnerPolicy(timeout_seconds=1)
     # Sleep covers wall-clock time
@@ -19,7 +18,7 @@ def test_timeout_enforcement():
     # The runner implementation returns 124 explicitly on subprocess.TimeoutExpired
 
 
-def test_memory_limit_enforcement():
+def test_memory_limit_enforcement() -> None:
     """
     Verify that memory limit is enforced.
     Note: RLIMIT_AS includes virtual memory, so typical overheads apply.
@@ -52,7 +51,7 @@ print(len(x))
         assert "Memory limit exceeded" in (result.error or "")
 
 
-def test_infinite_loop_timeout():
+def test_infinite_loop_timeout() -> None:
     """Verify infinite loop is caught by timeout."""
     policy = RunnerPolicy(timeout_seconds=1)
     code = """
@@ -64,7 +63,7 @@ while True:
     assert not result.ok
 
 
-def test_large_output_limit():
+def test_large_output_limit() -> None:
     """Verify that stdout capture is truncated or handled if too large."""
     # The policy defines max_output_kb
     policy = RunnerPolicy(max_output_kb=10)  # 10KB

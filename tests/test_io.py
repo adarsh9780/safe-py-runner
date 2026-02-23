@@ -1,7 +1,7 @@
-from safe_py_runner import RunnerPolicy, run_code
+from safe_py_runner import run_code
 
 
-def test_simple_io():
+def test_simple_io() -> None:
     """Verify simple input and output works."""
     code = "result = x + y"
     input_data = {"x": 10, "y": 20}
@@ -11,7 +11,7 @@ def test_simple_io():
     assert result.result == 30
 
 
-def test_dict_io():
+def test_dict_io() -> None:
     """Verify dictionary input and output."""
     code = """
 result = {
@@ -26,7 +26,7 @@ result = {
     assert result.result == {"sum": 20, "diff": 10}
 
 
-def test_stdout_capture():
+def test_stdout_capture() -> None:
     """Verify print output is captured."""
     code = """
 print("Hello")
@@ -37,7 +37,7 @@ print("World")
     assert "Hello\nWorld" in result.stdout
 
 
-def test_syntax_error():
+def test_syntax_error() -> None:
     """Verify syntax errors in user code are captured correctly."""
     code = "def incomplete_function("
     result = run_code(code)
@@ -46,7 +46,7 @@ def test_syntax_error():
     assert "SyntaxError" in (result.error or "")
 
 
-def test_runtime_error():
+def test_runtime_error() -> None:
     """Verify runtime exceptions are captured."""
     code = "x = 1 / 0"
     result = run_code(code)
@@ -55,7 +55,7 @@ def test_runtime_error():
     assert "ZeroDivisionError" in (result.error or "")
 
 
-def test_json_types_roundtrip():
+def test_json_types_roundtrip() -> None:
     """Verify various JSON types (bool, null, float, list)."""
     code = """
 result = {
@@ -74,7 +74,7 @@ result = {
     assert res["list_val"] == [1, 2, 3]
 
 
-def test_reserved_keys_protection():
+def test_reserved_keys_protection() -> None:
     """
     Verify that reserved input keys don't overwrite internal variables.
     reserved = {"__builtins__", "input_data", "result", "_print_", ...}

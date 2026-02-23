@@ -1,8 +1,8 @@
 [project]
 name = "safe-py-runner"
-version = "0.1.5"
-description = "Restricted Python execution runner with subprocess isolation, timeout, memory caps, and import/global controls"
-readme = "README_PYPI.md"
+version = "0.1.6"
+description = "Guardrailed Python execution runner with subprocess isolation, timeout, memory caps, and import/global controls"
+readme = "docs/README_PYPI.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Adarsh Maurya", email = "adarsh.x.maurya@gmail.com" }]
@@ -22,7 +22,7 @@ classifiers = [
   "Topic :: Security",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dependencies = ["RestrictedPython>=7.4"]
+dependencies = []
 
 [project.urls]
 Homepage = "https://github.com/adarsh9780/safe-py-runner"
@@ -51,3 +51,4 @@ target-version = "py311"
 python_version = "3.11"
 strict = true
 ignore_missing_imports = true
+files = ["src"]

@@ -1,0 +1,11 @@
+[policy]
+mode = "restrict"
+timeout_seconds = 5
+memory_limit_mb = 256
+max_output_kb = 128
+blocked_imports = ["os", "subprocess", "socket", "ctypes", "importlib"]
+blocked_builtins = ["eval", "exec", "open", "compile", "breakpoint"]
+allowed_imports = []
+allowed_builtins = []
+allowed_globals = []
+blocked_globals = []

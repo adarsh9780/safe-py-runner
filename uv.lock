@@ -194,15 +194,6 @@ wheels = [
 ]
 
 [[package]]
-name = "restrictedpython"
-version = "8.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5f/1c/aec08bcb4ab14a1521579fbe21ceff2a634bb1f737f11cf7f9c8bb96e680/restrictedpython-8.1.tar.gz", hash = "sha256:4a69304aceacf6bee74bdf153c728221d4e3109b39acbfe00b3494927080d898", size = 838331 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1a/c0/3848f4006f7e164ee20833ca984067e4b3fc99fe7f1dfa88b4927e681299/restrictedpython-8.1-py3-none-any.whl", hash = "sha256:4769449c6cdb10f2071649ba386902befff0eff2a8fd6217989fa7b16aeae926", size = 27651 },
-]
-
-[[package]]
 name = "ruff"
 version = "0.15.1"
 source = { registry = "https://pypi.org/simple" }
@@ -229,11 +220,8 @@ wheels = [
 
 [[package]]
 name = "safe-py-runner"
-version = "0.1.5"
+version = "0.1.6"
 source = { editable = "." }
-dependencies = [
-    { name = "restrictedpython" },
-]
 
 [package.optional-dependencies]
 dev = [
@@ -246,7 +234,6 @@ dev = [
 requires-dist = [
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.9.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
-    { name = "restrictedpython", specifier = ">=7.4" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.3.0" },
 ]
 provides-extras = ["dev"]

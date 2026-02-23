@@ -17,19 +17,34 @@ def run_code(
     code: str,
     input_data: dict[str, Any] | None = None,
     policy: RunnerPolicy | None = None,
+    policy_file: str | None = None,
     python_executable: str | None = None,
 ) -> RunnerResult:
     """Execute code in a separate subprocess with guardrails."""
-    policy = policy or RunnerPolicy()
+    if policy is not None and policy_file is not None:
+        raise ValueError("Provide either 'policy' or 'policy_file', not both")
+
+    if policy is None and policy_file is not None:
+        policy = RunnerPolicy.from_file(policy_file)
+    elif policy is None:
+        policy = RunnerPolicy()
+    elif policy.config_path is not None:
+        policy = RunnerPolicy.from_file(policy.config_path)
+
     payload = {
         "code": code,
         "input_data": input_data or {},
         "policy": {
+            "mode": policy.mode,
             "timeout_seconds": policy.timeout_seconds,
             "memory_limit_mb": policy.memory_limit_mb,
             "max_output_kb": policy.max_output_kb,
+            "allowed_imports": policy.allowed_imports,
             "blocked_imports": policy.blocked_imports,
+            "allowed_builtins": policy.allowed_builtins,
             "blocked_builtins": policy.blocked_builtins,
+            "allowed_globals": policy.allowed_globals,
+            "blocked_globals": policy.blocked_globals,
             "extra_globals": policy.extra_globals,
         },
     }

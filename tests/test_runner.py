@@ -1,7 +1,7 @@
 from safe_py_runner import RunnerPolicy, run_code
 
 
-def test_run_code_success_math_import():
+def test_run_code_success_math_import() -> None:
     policy = RunnerPolicy(
         timeout_seconds=2,
         memory_limit_mb=128,
@@ -19,7 +19,7 @@ def test_run_code_success_math_import():
     assert result.result == 9.0
 
 
-def test_import_blocked():
+def test_import_blocked() -> None:
     policy = RunnerPolicy(
         timeout_seconds=2,
         memory_limit_mb=128,
@@ -35,7 +35,7 @@ def test_import_blocked():
     assert "blocked by policy" in (result.error or "")
 
 
-def test_builtin_blocked():
+def test_builtin_blocked() -> None:
     policy = RunnerPolicy(
         timeout_seconds=2,
         memory_limit_mb=128,

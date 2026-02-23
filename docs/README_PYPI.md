@@ -16,9 +16,13 @@ When building agents that execute generated Python code, you often choose betwee
 
 - subprocess isolation
 - timeout enforcement
-- memory limits (POSIX)
-- import/builtin restrictions
+- memory limits (POSIX; macOS enforcement can be weaker than Linux)
+- secure-by-default import/builtin restrictions
 - JSON-safe input/output handling
+
+It supports two policy modes:
+- `restrict` (default): block selected symbols.
+- `allow`: allow only selected symbols.
 
 ## Installation
 
@@ -43,6 +47,9 @@ result = run_code(
     policy=policy,
 )
 
+# Or load policy from a TOML config file
+result = run_code(code="result = 1 + 1", policy_file="/absolute/path/to/policy.toml")
+
 if result.ok:
     print(result.result)  # 9.0
 else:
@@ -53,6 +60,8 @@ else:
 
 This is not an OS-level sandbox.  
 For untrusted hostile code, use container/VM isolation in addition to this package.
+
+Memory-limit caveat: `RLIMIT_AS` is platform-dependent. On macOS, address-space limits may not behave as strictly as Linux.
 
 ## More Information
 

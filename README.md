@@ -140,6 +140,8 @@ Optional shortcut:
 make push
 ```
 
+Note: if you already ran atomic steps (`make git-add` + `make git-commit`), you can run either `make git-push` or `make push`. `make push` is smart now: when there are no local file changes, it skips commit/test steps and only pushes.
+
 ## Release Workflow (Step-by-Step)
 
 Assuming `commit_message.txt` and `release_metadata.md` are updated:
@@ -196,6 +198,8 @@ Optional shortcut:
 ```bash
 make release
 ```
+
+Note: if you run release as atomic steps and already executed `make git-commit`, continue with `make git-push` and `make git-tag` (or run `make push` first; it will detect no local file changes and only push).
 
 ## Additional Recommended Steps
 

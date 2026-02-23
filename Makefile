@@ -43,8 +43,10 @@ help-push:
 	@echo ""
 	@echo "Shortcut:"
 	@echo "make push"
-	@echo "Runs (fail-fast): check-message -> test -> git-add -> git-commit -> git-push"
-	@echo "Requirement for git-commit: commit_message.txt must exist, be non-empty, and differ from the latest commit message."
+	@echo "Runs smart flow:"
+	@echo "- if there are local file changes: check-message -> test -> git-add -> git-commit -> git-push"
+	@echo "- if there are no local file changes: git-push only"
+	@echo "Requirement for git-commit path: commit_message.txt must exist, be non-empty, and differ from the latest commit message."
 
 help-release:
 	@echo "Release flow:"
@@ -126,7 +128,7 @@ git-commit: check-message
 	git commit -F commit_message.txt
 
 git-push:
-	git push origin main
+	git push origin master
 
 git-tag: check-no-version-arg check-pyproject-version check-tag-not-latest
 	@pyproject_version="$$(sed -n 's/^version = "\([^"]*\)"/\1/p' pyproject.toml | head -n1)"; \
@@ -134,7 +136,17 @@ git-tag: check-no-version-arg check-pyproject-version check-tag-not-latest
 	git tag -a "$$tag" -m "Release $$tag"; \
 	git push origin "$$tag"
 
-push: check-message test git-add git-commit git-push
+push:
+	@if git diff --quiet && git diff --cached --quiet; then \
+		echo "No local changes to commit; running git-push only."; \
+		$(MAKE) --no-print-directory git-push; \
+	else \
+		$(MAKE) --no-print-directory check-message; \
+		$(MAKE) --no-print-directory test; \
+		$(MAKE) --no-print-directory git-add; \
+		$(MAKE) --no-print-directory git-commit; \
+		$(MAKE) --no-print-directory git-push; \
+	fi
 
 release: check-no-version-arg check-pyproject-version metadata test git-add git-commit git-push git-tag
 

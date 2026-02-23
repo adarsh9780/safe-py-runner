@@ -30,25 +30,7 @@ jobs:
       - name: Read release metadata
         id: metadata
         run: |
-          python - <<'PY'
-          import json
-          import os
-
-          tag = os.environ["GITHUB_REF_NAME"]
-          metadata_file = ".github/release/metadata.json"
-
-          with open(metadata_file, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-          title = data["title"].replace("{{tag}}", tag)
-          description = data["description"].replace("{{tag}}", tag)
-
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
-            out.write(f"title={title}\\n")
-            out.write("body<<EOF\\n")
-            out.write(description)
-            out.write("\\nEOF\\n")
-          PY
+          python scripts/read_release_metadata.py
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2

@@ -102,57 +102,103 @@ Release notes for {{tag}}.
 
 `{{tag}}` is replaced automatically with the pushed tag name by the release workflow.
 
-## Release Steps (Contributors)
+## Commit Workflow (Step-by-Step)
 
-Step 1: Update `release_metadata.md` in project root (this file is local and gitignored).
+Assuming `commit_message.txt` is already updated:
 
-Step 2: Run metadata generator:
-
-```bash
-uv run python scripts/generate_release_metadata.py
-```
-
-Step 3: Bump version in `pyproject.toml` (for example `0.1.0` -> `0.1.1`).
-
-Step 4: Run tests locally:
+1. Run tests:
 
 ```bash
-uv run --extra dev pytest
+make test
 ```
 
-Step 5: Commit and push changes to `main` (including `.github/release/metadata.json`).
-
-Step 6: Create and push release tag:
+2. Stage files:
 
 ```bash
-git tag -a v0.1.1 -m "Release v0.1.1"
-git push origin v0.1.1
+make git-add
 ```
 
-Step 7: Verify GitHub Actions release workflow succeeded and wheel is attached to the GitHub Release.
-
-## Test and Push Steps (Contributors)
-
-Step 1: Run tests locally:
+3. Commit:
 
 ```bash
-uv run --extra dev pytest
+make git-commit
 ```
 
-Step 2: Stage files:
+`make git-commit` validates:
+- `commit_message.txt` exists and is non-empty
+- `commit_message.txt` is different from the latest git commit message
+
+4. Push to `main`:
 
 ```bash
-git add .
+make git-push
 ```
 
-Step 3: Commit:
+Optional shortcut:
 
 ```bash
-git commit -m "Describe your change"
+make push
 ```
 
-Step 4: Push to `main`:
+## Release Workflow (Step-by-Step)
+
+Assuming `commit_message.txt` and `release_metadata.md` are updated:
+
+1. Bump version:
 
 ```bash
-git push origin main
+make set-version 0.1.2
 ```
+
+2. Regenerate release metadata JSON:
+
+```bash
+make metadata
+```
+
+3. Run tests:
+
+```bash
+make test
+```
+
+4. Stage files:
+
+```bash
+make git-add
+```
+
+5. Commit:
+
+```bash
+make git-commit
+```
+
+6. Push to `main`:
+
+```bash
+make git-push
+```
+
+7. Create and push release tag:
+
+```bash
+make git-tag
+```
+
+`make git-tag` reads version from `pyproject.toml` and will fail if:
+- a version argument is provided
+- version in `pyproject.toml` is missing or invalid
+- current tag from `pyproject.toml` is already the latest tag
+
+Optional shortcut:
+
+```bash
+make release
+```
+
+## Additional Recommended Steps
+
+1. Run `make help` to see available commands.
+2. Verify GitHub Actions CI passed on `main` before tagging.
+3. After tagging, verify the release workflow succeeded and wheel artifact is attached.

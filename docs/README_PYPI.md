@@ -1,6 +1,6 @@
 # safe-py-runner
 
-A lightweight, secure-by-default Python code runner designed for LLM agents.
+A lightweight Python code runner with guardrails for LLM agent workflows.
 
 [GitHub Repository](https://github.com/adarsh9780/safe-py-runner)
 
@@ -17,8 +17,20 @@ When building agents that execute generated Python code, you often choose betwee
 - subprocess isolation
 - timeout enforcement
 - memory limits (POSIX; macOS enforcement can be weaker than Linux)
-- secure-by-default import/builtin restrictions
+- import/builtin policy restrictions
 - JSON-safe input/output handling
+
+## Where It Fits
+
+| Option | Isolation Strength | Operational Cost | Typical Use |
+| --- | --- | --- | --- |
+| `eval` / `exec` in main process | Low | Low | Local scripts, trusted experiments |
+| `safe-py-runner` | Medium | Low to medium | Internal tools, agent prototypes, controlled workloads |
+| Docker / VM / E2B-style sandbox | High | Medium to high | Production multi-tenant or hostile untrusted code |
+
+Production guidance:
+- For hostile public-user code, use Docker/VM/external sandboxing as the primary boundary.
+- `safe-py-runner` can be used as an extra inner guardrail layer.
 
 It supports two policy modes:
 - `restrict` (default): block selected symbols.

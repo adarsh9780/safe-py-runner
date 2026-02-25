@@ -1,6 +1,6 @@
 # safe-py-runner
 
-A lightweight, secure-by-default Python code runner designed for LLM agents.
+A lightweight Python code runner with guardrails for LLM agent workflows.
 
 [![PyPI version](https://badge.fury.io/py/safe-py-runner.svg)](https://badge.fury.io/py/safe-py-runner)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -8,21 +8,29 @@ A lightweight, secure-by-default Python code runner designed for LLM agents.
 Recent updates are tracked in [CHANGELOG.md](CHANGELOG.md).
 Detailed docs are available in [docs/README.md](docs/README.md).
 
-**The Missing Middleware for AI Agents:**
-When building agents that write code, you often face a dilemma:
-1.  **Run Blindly:** Use `exec()` in your main process (Dangerous, fragile).
-2.  **Full Sandbox:** Spin up Docker containers for every execution (Heavy, slow, complex).
-3.  **SaaS:** Pay for external sandbox APIs (Expensive, latency).
+`safe-py-runner` runs user code in a separate subprocess with timeout, memory, and policy guardrails.
+It is safer than running `eval` or `exec` in your main process.
+It is not a full security sandbox and should not be your only isolation boundary for hostile public code.
 
-**`safe-py-runner` offers a middle path:** It runs code in a **subprocess** with **timeout**, **memory limits**, and **input/output marshalling**. It's perfect for internal tools, data analysis agents, and POCs where full Docker isolation is overkill.
+## Where It Fits
+
+| Option | Isolation Strength | Operational Cost | Typical Use |
+| --- | --- | --- | --- |
+| `eval` / `exec` in main process | Low | Low | Local scripts, trusted experiments |
+| `safe-py-runner` | Medium | Low to medium | Internal tools, agent prototypes, controlled workloads |
+| Docker / VM / E2B-style sandbox | High | Medium to high | Production multi-tenant or hostile untrusted code |
+
+Production guidance:
+- For hostile public-user code, use Docker/VM/external sandboxing as the primary boundary.
+- `safe-py-runner` can still be useful as an inner guardrail layer inside that setup.
 
 ## Features
 
-- 🛡️ **Process Isolation:** User code runs in a separate subprocess, protecting your main app from crashes.
-- ⏱️ **Timeouts:** Automatically kill scripts that run too long (default 5s).
-- 💾 **Memory Limits:** Enforce RAM usage caps (default 256MB) on POSIX systems. On macOS, address-space limits can be weaker, so keep strict timeouts and use container isolation for stronger guarantees.
-- 🚫 **Import/Builtin Blocklist:** Secure defaults block dangerous modules and builtins (for example `os`, `subprocess`, `socket`, `eval`, `exec`, and `open`).
-- 📦 **Magic I/O:** Automatically injects input variables and captures results as JSON.
+- Process isolation: user code runs in a separate subprocess.
+- Timeouts: terminate scripts that run too long (default 5s).
+- Memory limits: enforce RAM caps (default 256MB) on POSIX systems.
+- Import and builtin policy controls: blocklist/allowlist behavior via policy modes.
+- Input/output marshalling: pass JSON-safe input and collect `result`, `stdout`, and `stderr`.
 
 ## Installation
 
@@ -239,7 +247,7 @@ if not result.ok:
 ### Common Gotchas
 
 1. This is not a full sandbox.
-For hostile public-user code, use Docker/VM isolation in addition to this package.
+For hostile public-user code, use Docker/VM/E2B-style isolation in addition to this package.
 
 2. `allow` mode can break common Python code if builtins are too strict.
 Example: if `print` or `len` is missing from `allowed_builtins`, user code can fail with `NameError`.

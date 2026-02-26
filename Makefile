@@ -4,11 +4,12 @@ VERSION ?=
 POS_VERSION := $(word 2,$(MAKECMDGOALS))
 EFFECTIVE_VERSION := $(if $(VERSION),$(VERSION),$(POS_VERSION))
 
-.PHONY: help help-push help-release help-tag check-message check-version check-input-version check-version-different-from-pyproject check-no-version-arg check-pyproject-version check-tag-not-latest set-version metadata test git-add git-commit git-push git-tag push release
+.PHONY: help help-push help-release help-tag check-message check-version check-input-version check-version-different-from-pyproject check-no-version-arg check-pyproject-version check-tag-not-latest set-version metadata test test-docker git-add git-commit git-push git-tag push release
 
 help:
 	@echo "Usage:"
 	@echo "  make test"
+	@echo "  make test-docker"
 	@echo "  make git-add"
 	@echo "  make git-commit"
 	@echo "  make git-push"
@@ -32,6 +33,7 @@ help:
 	@echo "  set-version   Update pyproject.toml project version"
 	@echo "  check-version Validate current version in pyproject.toml"
 	@echo "  test          Run test suite"
+	@echo "  test-docker   Run Docker integration tests (requires Docker daemon)"
 	@echo "  push          Validate message, test, commit, and push to main"
 	@echo "  release       Bump version, regenerate metadata, test, commit, push, and tag"
 
@@ -126,6 +128,9 @@ metadata:
 
 test:
 	uv run --extra dev pytest
+
+test-docker:
+	RUN_DOCKER_TESTS=1 uv run --extra dev pytest tests/integration/test_docker_backend.py
 
 git-add:
 	git add .

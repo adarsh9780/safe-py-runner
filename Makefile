@@ -4,12 +4,14 @@ VERSION ?=
 POS_VERSION := $(word 2,$(MAKECMDGOALS))
 EFFECTIVE_VERSION := $(if $(VERSION),$(VERSION),$(POS_VERSION))
 
-.PHONY: help help-push help-release help-tag check-message check-version check-input-version check-version-different-from-pyproject check-no-version-arg check-pyproject-version check-tag-not-latest set-version metadata test test-docker git-add git-commit git-push git-tag push release
+.PHONY: help help-push help-release help-tag check-message check-version check-input-version check-version-different-from-pyproject check-no-version-arg check-pyproject-version check-tag-not-latest set-version metadata lint typecheck test test-docker git-add git-commit git-push git-tag push release
 
 help:
 	@echo "Usage:"
 	@echo "  make test"
 	@echo "  make test-docker"
+	@echo "  make lint"
+	@echo "  make typecheck"
 	@echo "  make git-add"
 	@echo "  make git-commit"
 	@echo "  make git-push"
@@ -28,13 +30,15 @@ help:
 	@echo "  help-tag      Show details for tag workflow"
 	@echo "  git-add       Stage all changes"
 	@echo "  git-commit    Commit using commit_message.txt with validations"
-	@echo "  git-push      Push current branch to origin main"
+	@echo "  git-push      Push current branch to origin master"
 	@echo "  git-tag       Create and push release tag using pyproject.toml version"
 	@echo "  set-version   Update pyproject.toml project version"
 	@echo "  check-version Validate current version in pyproject.toml"
-	@echo "  test          Run test suite"
+	@echo "  lint          Run ruff checks"
+	@echo "  typecheck     Run mypy checks"
+	@echo "  test          Run lint, type checks, and unit tests"
 	@echo "  test-docker   Run Docker integration tests (requires Docker daemon)"
-	@echo "  push          Validate message, test, commit, and push to main"
+	@echo "  push          Validate message, test, commit, and push to master"
 	@echo "  release       Bump version, regenerate metadata, test, commit, push, and tag"
 
 help-push:
@@ -89,7 +93,8 @@ check-input-version:
 check-version:
 	@$(MAKE) --no-print-directory check-no-version-arg
 	@$(MAKE) --no-print-directory check-pyproject-version
-	@echo "pyproject.toml version is valid."
+	@pyproject_version="$$(sed -n 's/^version = "\([^"]*\)"/\1/p' pyproject.toml | head -n1)"; \
+	echo "pyproject.toml version: $$pyproject_version (valid)"
 
 check-version-different-from-pyproject: check-input-version
 	@pyproject_version="$$(sed -n 's/^version = "\([^"]*\)"/\1/p' pyproject.toml | head -n1)"; \
@@ -127,7 +132,15 @@ metadata:
 	fi
 
 test:
+	uv run --extra dev ruff check .
+	uv run --extra dev mypy
 	uv run --extra dev pytest
+
+lint:
+	uv run --extra dev ruff check .
+
+typecheck:
+	uv run --extra dev mypy
 
 test-docker:
 	RUN_DOCKER_TESTS=1 uv run --extra dev pytest tests/integration/test_docker_backend.py

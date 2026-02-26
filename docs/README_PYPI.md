@@ -20,6 +20,10 @@ When building agents that execute generated Python code, you often choose betwee
 - import/builtin policy restrictions
 - JSON-safe input/output handling
 
+Honest scope:
+- Good fit: LLM-generated scripts for your own team and other controlled internal workloads.
+- Not good alone: anonymous public code execution. Use Docker/VM/OS sandboxing as the primary boundary.
+
 ## Where It Fits
 
 | Option | Isolation Strength | Operational Cost | Typical Use |
@@ -97,6 +101,14 @@ This is not an OS-level sandbox.
 For untrusted hostile code, use container/VM isolation in addition to this package.
 
 Memory-limit caveat: `RLIMIT_AS` is platform-dependent. On macOS, address-space limits may not behave as strictly as Linux.
+
+## Common Gotchas
+
+1. `engine` is required for `run_code(...)`; there is no implicit backend selection.
+2. `policy` and `policy_file` are mutually exclusive; pass only one.
+3. In `allow` mode, `allowed_globals` controls both input key injection and `extra_globals`.
+4. `importlib` is intentionally blocked in all modes.
+5. Package environments require pinned specs (`name==version`).
 
 ## More Information
 

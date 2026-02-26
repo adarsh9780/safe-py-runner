@@ -12,6 +12,10 @@ Detailed docs are available in [docs/README.md](docs/README.md).
 It is safer than running `eval` or `exec` in your main process.
 It is not a full security sandbox and should not be your only isolation boundary for hostile public code.
 
+Honest scope:
+- Good fit: LLM-generated scripts for your own team, internal tools, controlled workloads.
+- Not good alone: anonymous public code execution. Pair this with Docker/VM/OS sandboxing first.
+
 ## Where It Fits
 
 | Option | Isolation Strength | Operational Cost | Typical Use |
@@ -324,17 +328,28 @@ For hostile public-user code, use Docker/VM/E2B-style isolation in addition to t
 2. `allow` mode can break common Python code if builtins are too strict.
 Example: if `print` or `len` is missing from `allowed_builtins`, user code can fail with `NameError`.
 
-3. In `allow` mode, input keys are only injected if listed in `allowed_globals`.
-If `x` is missing in `allowed_globals`, code like `result = x + 1` fails.
+3. In `allow` mode, both input key injection and `extra_globals` are filtered by `allowed_globals`.
+If `x` is missing in `allowed_globals`, code like `result = x + 1` fails even when `input_data={"x": 1}`.
+If `helper` is missing in `allowed_globals`, `extra_globals={"helper": 10}` is also ignored.
 
-4. `importlib` is blocked intentionally.
-This prevents indirect import bypass patterns.
+4. `importlib` is blocked intentionally in all modes.
+It is blocked even if you include it in `allowed_imports`, to reduce indirect import bypass patterns.
 
-5. Memory limits vary by platform.
-`RLIMIT_AS` is usually stronger on Linux and may be weaker on macOS.
+5. Memory limits differ by engine and platform.
+LocalEngine relies on `RLIMIT_AS` (POSIX only), which is usually stronger on Linux and may be weaker on macOS.
+DockerEngine also applies container memory limits, which are generally more predictable than host `RLIMIT_AS`.
 
 6. `policy` and `policy_file` are mutually exclusive.
 Pass one or the other to `run_code`, not both.
+
+7. `engine` is required.
+`run_code(...)` no longer supports implicit backend selection.
+
+8. Package installation for `LocalEngine(packages=...)` and `DockerEngine(packages=...)` only accepts pinned specs.
+Use `name==version` format (for example `pandas==2.2.2`), not unpinned names.
+
+9. DockerEngine does not silently fall back to local execution.
+If Docker CLI/daemon is unavailable, the run fails with a clear error.
 
 ### API Reference
 
@@ -390,7 +405,7 @@ Contributions are welcome! Please open an issue or PR on GitHub.
 
 ## CI and Release Automation
 
-- Push to `main`: runs CI tests automatically via GitHub Actions.
+- Push to `master`: runs CI tests automatically via GitHub Actions.
 - Push a tag like `v0.1.1`: builds `sdist` + wheel, creates a GitHub Release, and publishes to PyPI via Trusted Publishing.
 
 Release title/description are read from:
@@ -420,11 +435,13 @@ Release notes for {{tag}}.
 
 Assuming `commit_message.txt` is already updated:
 
-1. Run tests:
+1. Run quality checks:
 
 ```bash
 make test
 ```
+
+`make test` runs `ruff`, `mypy`, and `pytest` (in that order).
 
 2. Stage files:
 
@@ -442,7 +459,7 @@ make git-commit
 - `commit_message.txt` exists and is non-empty
 - `commit_message.txt` is different from the latest git commit message
 
-4. Push to `main`:
+4. Push to `master`:
 
 ```bash
 make git-push
@@ -472,7 +489,7 @@ make set-version 0.1.2
 make metadata
 ```
 
-3. Run tests:
+3. Run quality checks:
 
 ```bash
 make test
@@ -490,7 +507,7 @@ make git-add
 make git-commit
 ```
 
-6. Push to `main`:
+6. Push to `master`:
 
 ```bash
 make git-push
@@ -518,5 +535,5 @@ Note: if you run release as atomic steps and already executed `make git-commit`,
 ## Additional Recommended Steps
 
 1. Run `make help` to see available commands.
-2. Verify GitHub Actions CI passed on `main` before tagging.
+2. Verify GitHub Actions CI passed on `master` before tagging.
 3. After tagging, verify the release workflow succeeded and wheel artifact is attached.

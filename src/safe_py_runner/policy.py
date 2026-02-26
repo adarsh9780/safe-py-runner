@@ -7,10 +7,24 @@ from typing import Any
 
 
 def _default_policy_path() -> Path:
+    """Return bundled default policy TOML path.
+
+    Example:
+        ```python
+        path = _default_policy_path()
+        ```
+    """
     return Path(__file__).with_name("default_policy.toml")
 
 
 def _read_policy_toml(path: Path) -> dict[str, Any]:
+    """Read policy TOML and return normalized policy dictionary.
+
+    Example:
+        ```python
+        raw = _read_policy_toml(Path("/tmp/policy.toml"))
+        ```
+    """
     if not path.exists():
         return {
             "mode": "restrict",
@@ -32,6 +46,13 @@ def _read_policy_toml(path: Path) -> dict[str, Any]:
 
 
 def _list_of_str(value: Any, field_name: str) -> list[str]:
+    """Validate and normalize a list-of-strings policy field.
+
+    Example:
+        ```python
+        blocked = _list_of_str(["os", "subprocess"], "blocked_imports")
+        ```
+    """
     if value is None:
         return []
     if not isinstance(value, list):
@@ -71,7 +92,13 @@ DEFAULT_BLOCKED_GLOBALS = _list_of_str(
 
 @dataclass(slots=True)
 class RunnerPolicy:
-    """Execution policy for untrusted Python code."""
+    """Execution policy for untrusted Python code.
+
+    Example:
+        ```python
+        policy = RunnerPolicy(timeout_seconds=5, blocked_imports=["os"])
+        ```
+    """
 
     mode: str = DEFAULT_MODE
     timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS
@@ -87,11 +114,25 @@ class RunnerPolicy:
     config_path: str | None = None
 
     def __post_init__(self) -> None:
+        """Validate mode after dataclass initialization.
+
+        Example:
+            ```python
+            RunnerPolicy(mode="restrict")
+            ```
+        """
         if self.mode not in {"allow", "restrict"}:
             raise ValueError("mode must be 'allow' or 'restrict'")
 
     @classmethod
     def from_file(cls, config_path: str) -> "RunnerPolicy":
+        """Create a policy instance from a TOML file.
+
+        Example:
+            ```python
+            policy = RunnerPolicy.from_file("/tmp/policy.toml")
+            ```
+        """
         raw = _read_policy_toml(Path(config_path))
         extra_globals_raw = raw.get("extra_globals", {})
         if not isinstance(extra_globals_raw, dict):
@@ -118,6 +159,14 @@ class RunnerPolicy:
 
 @dataclass(slots=True)
 class RunnerResult:
+    """Normalized execution result returned by `run_code`.
+
+    Example:
+        ```python
+        result = RunnerResult(ok=True, result=42)
+        ```
+    """
+
     ok: bool
     result: Any = None
     stdout: str = ""

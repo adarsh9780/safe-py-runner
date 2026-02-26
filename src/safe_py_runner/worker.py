@@ -56,6 +56,13 @@ def _inject_input_keys(
 
 
 def _set_limits(memory_limit_mb: int) -> list[str]:
+    """Apply process memory limits when supported by platform.
+
+    Example:
+        ```python
+        errors = _set_limits(memory_limit_mb=256)
+        ```
+    """
     errors: list[str] = []
     if _resource is None:
         errors.append("RLIMIT limits unavailable on this platform")
@@ -82,6 +89,13 @@ def _safe_import_factory_mode(
     allowed_imports: set[str],
     blocked_imports: set[str],
 ) -> Callable[..., Any]:
+    """Create a policy-aware import function for allow/restrict modes.
+
+    Example:
+        ```python
+        safe_import = _safe_import_factory_mode("restrict", set(), {"os"})
+        ```
+    """
     def _safe_import(
         name: str,
         globals: dict[str, Any] | None = None,
@@ -89,6 +103,13 @@ def _safe_import_factory_mode(
         fromlist: Any = (),
         level: int = 0,
     ) -> Any:
+        """Import hook that enforces configured import policy.
+
+        Example:
+            ```python
+            module = _safe_import("math")
+            ```
+        """
         if name == "importlib" or name.startswith("importlib."):
             raise ImportError("Import 'importlib' is blocked by policy")
 
@@ -109,6 +130,13 @@ def _build_safe_builtins(
     blocked_builtins: set[str],
     safe_import: Any,
 ) -> dict[str, Any]:
+    """Build sanitized builtins dict based on selected policy mode.
+
+    Example:
+        ```python
+        builtins_map = _build_safe_builtins("restrict", set(), {"eval"}, safe_import)
+        ```
+    """
     raw_builtins = __builtins__
     if isinstance(raw_builtins, dict):
         builtins_obj: dict[str, Any] = raw_builtins
@@ -131,6 +159,13 @@ def _build_safe_builtins(
 
 
 def _normalize_system_exit(exit_code: Any) -> tuple[bool, int, str | None]:
+    """Normalize `SystemExit` payload into runner status fields.
+
+    Example:
+        ```python
+        ok, code, error = _normalize_system_exit(1)
+        ```
+    """
     if exit_code in (None, 0):
         return True, 0, None
     if isinstance(exit_code, int):
@@ -144,6 +179,13 @@ def _filter_extra_globals(
     allowed_globals: set[str],
     blocked_globals: set[str],
 ) -> dict[str, Any]:
+    """Filter extra globals according to active policy mode.
+
+    Example:
+        ```python
+        filtered = _filter_extra_globals({"x": 1}, "restrict", set(), set())
+        ```
+    """
     filtered: dict[str, Any] = {}
     for key, value in extra_globals.items():
         key_str = str(key)
@@ -156,6 +198,15 @@ def _filter_extra_globals(
 
 
 def main() -> int:
+    """Worker entrypoint: execute user code and print JSON response to stdout.
+
+    Example:
+        ```python
+        # Called by runner subprocess:
+        # python -m safe_py_runner.worker < payload.json
+        code = main()
+        ```
+    """
     req = json.loads(sys.stdin.read() or "{}")
     code: str = req.get("code", "")
     input_data = req.get("input_data")

@@ -230,7 +230,8 @@ def build_parser() -> argparse.ArgumentParser:
         epilog=(
             "Examples:\n"
             "  python -m spr stop container abc123\n"
-            "  python -m spr stop container abc123 --timeout-seconds 10"
+            "  python -m spr stop container abc123 --timeout-seconds 10\n"
+            "  python -m spr stop all --timeout-seconds 10"
         ),
         formatter_class=_HELP_FORMATTER,
     )
@@ -247,6 +248,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     stop_container.add_argument("container_id")
     stop_container.add_argument(
+        "--timeout-seconds",
+        type=int,
+        default=10,
+        help="Grace period before force kill by Docker (default: 10).",
+    )
+    stop_all = stop_cmd_sub.add_parser(
+        "all",
+        help="Gracefully stop all running managed containers.",
+        description="Gracefully stop all currently running managed containers.",
+        formatter_class=_HELP_FORMATTER,
+    )
+    stop_all.add_argument(
         "--timeout-seconds",
         type=int,
         default=10,
@@ -397,6 +410,27 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "stop" and args.resource == "container":
         engine.stop_container(args.container_id, timeout_seconds=args.timeout_seconds)
         _CONSOLE.print(Panel.fit(f"Stopped container {args.container_id}", style="bold green"))
+        return 0
+    if args.command == "stop" and args.resource == "all":
+        rows = [_to_jsonable(c) for c in engine.list_containers(all_states=True)]
+        running = [
+            row
+            for row in rows
+            if isinstance(row, dict)
+            and isinstance(row.get("id"), str)
+            and row.get("state") == "running"
+        ]
+        if not running:
+            _CONSOLE.print(Panel.fit("No running managed containers to stop.", style="bold yellow"))
+            return 0
+        for row in running:
+            engine.stop_container(row["id"], timeout_seconds=args.timeout_seconds)
+        _CONSOLE.print(
+            Panel.fit(
+                f"Stopped {len(running)} managed container(s) with timeout {args.timeout_seconds}s",
+                style="bold green",
+            )
+        )
         return 0
     if args.command == "kill" and args.resource == "container":
         engine.kill_container(args.container_id)

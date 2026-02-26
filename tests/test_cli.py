@@ -72,6 +72,42 @@ def test_cli_stop_container(capsys: pytest.CaptureFixture[str]) -> None:
     assert "Stopped container abc123" in output
 
 
+def test_cli_stop_all_containers(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch) -> None:
+    class _StopAllEngine(_FakeEngine):
+        stopped_ids: list[tuple[str, int]] = []
+
+        def list_containers(self, all_states: bool = False):
+            running = _FakeContainer("abc123", "safe-py-runner-1")
+            exited = _FakeContainer("def456", "safe-py-runner-2")
+            exited.state = "exited"
+            return [running, exited]
+
+        def stop_container(self, container_id: str, timeout_seconds: int = 10) -> None:
+            self.__class__.stopped_ids.append((container_id, timeout_seconds))
+
+    monkeypatch.setattr(cli, "DockerEngine", _StopAllEngine)
+    _StopAllEngine.stopped_ids = []
+    code = cli.main(["stop", "all", "--timeout-seconds", "7"])
+    output = capsys.readouterr().out
+    assert code == 0
+    assert "Stopped 1 managed container(s) with timeout 7s" in output
+    assert _StopAllEngine.stopped_ids == [("abc123", 7)]
+
+
+def test_cli_stop_all_no_running_containers(capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch) -> None:
+    class _NoRunningEngine(_FakeEngine):
+        def list_containers(self, all_states: bool = False):
+            exited = _FakeContainer("def456", "safe-py-runner-2")
+            exited.state = "exited"
+            return [exited]
+
+    monkeypatch.setattr(cli, "DockerEngine", _NoRunningEngine)
+    code = cli.main(["stop", "all"])
+    output = capsys.readouterr().out
+    assert code == 0
+    assert "No running managed containers to stop." in output
+
+
 def test_cli_container_not_found(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> None:
     class _NoContainerEngine(_FakeEngine):
         def list_containers(self, all_states: bool = False):

@@ -24,6 +24,11 @@ Production guidance:
 - For hostile public-user code, use Docker/VM/external sandboxing as the primary boundary.
 - `safe-py-runner` can still be useful as an inner guardrail layer inside that setup.
 
+## Bubblewrap Comparison
+
+If you want a direct comparison with Linux `bubblewrap` (`bwrap`) for import controls, memory limits, and timeouts, see:
+[docs/BUBBLEWRAP_COMPARISON.md](docs/BUBBLEWRAP_COMPARISON.md)
+
 ## Features
 
 - Process isolation: user code runs in a separate subprocess.

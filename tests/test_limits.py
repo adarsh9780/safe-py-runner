@@ -1,6 +1,12 @@
 import sys
 import pytest
-from safe_py_runner import RunnerPolicy, run_code
+from safe_py_runner import RunnerPolicy, LocalEngine, run_code as raw_run_code
+
+ENGINE = LocalEngine(venv_dir="/tmp/safe_py_runner_test_venv", venv_manager="uv")
+
+def run_code(*args, **kwargs):
+    kwargs.setdefault("engine", ENGINE)
+    return raw_run_code(*args, **kwargs)
 
 
 def test_timeout_enforcement() -> None:

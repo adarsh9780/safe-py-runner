@@ -1,37 +1,42 @@
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
-from pathlib import Path
 from typing import Any
 
+from .execution.capabilities import preflight_validate_backend_capabilities
+from .execution.engine import ExecutionEngine
+from .execution.types import ExecutionRequest
 from .policy import RunnerPolicy, RunnerResult
 
 
-def _worker_path() -> Path:
-    return Path(__file__).with_name("worker.py")
+def _resolve_policy(policy: RunnerPolicy | None, policy_file: str | None) -> RunnerPolicy:
+    """Resolve the effective policy object for a run.
 
-
-def run_code(
-    code: str,
-    input_data: dict[str, Any] | None = None,
-    policy: RunnerPolicy | None = None,
-    policy_file: str | None = None,
-    python_executable: str | None = None,
-) -> RunnerResult:
-    """Execute code in a separate subprocess with guardrails."""
+    Example:
+        ```python
+        policy = _resolve_policy(None, "/tmp/policy.toml")
+        ```
+    """
     if policy is not None and policy_file is not None:
         raise ValueError("Provide either 'policy' or 'policy_file', not both")
-
     if policy is None and policy_file is not None:
-        policy = RunnerPolicy.from_file(policy_file)
-    elif policy is None:
-        policy = RunnerPolicy()
-    elif policy.config_path is not None:
-        policy = RunnerPolicy.from_file(policy.config_path)
+        return RunnerPolicy.from_file(policy_file)
+    if policy is None:
+        return RunnerPolicy()
+    if policy.config_path is not None:
+        return RunnerPolicy.from_file(policy.config_path)
+    return policy
 
-    payload = {
+
+def _build_payload(code: str, input_data: dict[str, Any] | None, policy: RunnerPolicy) -> dict[str, Any]:
+    """Build the worker payload from code, input, and policy.
+
+    Example:
+        ```python
+        payload = _build_payload("result = 1 + 1", {"x": 2}, RunnerPolicy())
+        ```
+    """
+    return {
         "code": code,
         "input_data": input_data or {},
         "policy": {
@@ -49,44 +54,67 @@ def run_code(
         },
     }
 
-    py_bin = python_executable or sys.executable
-    cmd = [py_bin, str(_worker_path())]
 
-    try:
-        completed = subprocess.run(
-            cmd,
-            input=json.dumps(payload),
-            capture_output=True,
-            text=True,
-            timeout=max(1, int(policy.timeout_seconds)),
-            check=False,
+def run_code(
+    code: str,
+    engine: ExecutionEngine,
+    input_data: dict[str, Any] | None = None,
+    policy: RunnerPolicy | None = None,
+    policy_file: str | None = None,
+) -> RunnerResult:
+    """Execute Python code using the provided execution engine and policy guardrails.
+
+    Example:
+        ```python
+        from safe_py_runner import LocalEngine, run_code
+        engine = LocalEngine(venv_dir="/tmp/my_env")
+        result = run_code("result = 2 + 2", engine=engine)
+        ```
+    """
+    resolved_policy = _resolve_policy(policy, policy_file)
+    preflight_validate_backend_capabilities(type(engine).__name__.lower())
+    payload = _build_payload(code, input_data, resolved_policy)
+    outcome = engine.execute(
+        ExecutionRequest(
+            payload=payload,
+            timeout_seconds=max(1, int(resolved_policy.timeout_seconds)),
         )
-    except subprocess.TimeoutExpired:
+    )
+
+    if outcome.timed_out:
         return RunnerResult(
             ok=False,
             timed_out=True,
-            error=f"Execution timed out after {policy.timeout_seconds}s",
+            error=outcome.error or f"Execution timed out after {resolved_policy.timeout_seconds}s",
             exit_code=124,
         )
 
-    raw = completed.stdout.strip() or "{}"
+    if outcome.error and not outcome.stdout.strip():
+        return RunnerResult(
+            ok=False,
+            error=outcome.error,
+            stderr=outcome.stderr,
+            exit_code=outcome.returncode,
+        )
+
+    raw = outcome.stdout.strip() or "{}"
     try:
         parsed = json.loads(raw)
     except json.JSONDecodeError:
         return RunnerResult(
             ok=False,
             error="Runner returned invalid JSON",
-            stderr=completed.stderr,
-            exit_code=completed.returncode,
+            stderr=outcome.stderr,
+            exit_code=outcome.returncode,
         )
 
     return RunnerResult(
         ok=bool(parsed.get("ok")),
         result=parsed.get("result"),
         stdout=str(parsed.get("stdout", "")),
-        stderr=str(parsed.get("stderr", "")) or completed.stderr,
+        stderr=str(parsed.get("stderr", "")) or outcome.stderr,
         timed_out=bool(parsed.get("timed_out", False)),
         resource_exceeded=bool(parsed.get("resource_exceeded", False)),
-        error=parsed.get("error"),
-        exit_code=completed.returncode,
+        error=parsed.get("error") or outcome.error,
+        exit_code=outcome.returncode,
     )

@@ -24,6 +24,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - README and PyPI README now include explicit "good fit" and "not good alone" scope statements.
 - "Common Gotchas" sections were refreshed to match current engine, policy, import, and package behavior.
 - CI workflow triggers now include `master` (and `main`) to match repository branch usage.
+- CI verify workflow now installs `uv` explicitly before running tests.
 
 ## [0.1.5] - 2026-02-23
 

@@ -43,10 +43,57 @@ If you want a direct comparison with Linux `bubblewrap` (`bwrap`) for import con
 pip install safe-py-runner
 ```
 
+## Backends
+
+`run_code` now takes an explicit engine object:
+
+- `LocalEngine`: subprocess worker in a managed virtual environment.
+- `DockerEngine`: worker inside a managed Docker container pool.
+
+Example:
+
+```python
+from safe_py_runner import DockerEngine, run_code
+
+engine = DockerEngine(container_registry="safe-py-runner-runtime:local")
+result = run_code("result = 2 + 2", engine=engine)
+```
+
+Important behavior:
+- If Docker is unavailable, DockerEngine returns a clear error (no silent fallback).
+- Docker pool defaults: `pool_size=min(cpu_count, 4)`, `max_runs=25`, `ttl_seconds=600`.
+- DockerEngine exposes managed-only admin methods: `list_containers`, `list_images`, `stop_container`, `kill_container`, `cleanup_stale`.
+
+See [docs/BACKENDS.md](docs/BACKENDS.md) for full details.
+See [docs/EXAMPLES.md](docs/EXAMPLES.md) for end-to-end examples.
+
+## CLI (Container Management)
+
+You can manage safe-py-runner managed Docker resources directly:
+
+```bash
+python -m spr list containers
+python -m spr list images
+python -m spr container <id-or-name>
+python -m spr stop container <id>
+python -m spr kill container <id>
+python -m spr cleanup
+```
+
+Remote Docker targeting from CLI is supported:
+
+```bash
+python -m spr --docker-context my-remote-context list containers
+python -m spr --ssh-host server --ssh-user ubuntu --ssh-port 22 list containers
+```
+
+Note: CLI commands are managed-only. They do not operate on unrelated Docker resources.
+
 ## Quick Start
 
 ```python
-from safe_py_runner import RunnerPolicy, run_code
+from functools import partial
+from safe_py_runner import LocalEngine, RunnerPolicy, run_code
 
 # Define a policy (optional, defaults are already restrictive)
 policy = RunnerPolicy(
@@ -55,13 +102,18 @@ policy = RunnerPolicy(
     blocked_imports=["os", "subprocess", "socket"],
 )
 
+# Create engine once (required)
+engine = LocalEngine(venv_dir="/tmp/safe_py_runner_demo_venv", venv_manager="uv")
+
+# Optional convenience: bind engine for repeated calls
+run_with_engine = partial(run_code, engine=engine)
+
 # Run code
 result = run_code(
     code="import math\nresult = math.sqrt(input_data['x'])",
     input_data={"x": 81},
     policy=policy,
-    # Optional: Path to a specific Python executable (e.g., in a venv)
-    # python_executable="/path/to/venv/bin/python",
+    engine=engine,
 )
 
 if result.ok:
@@ -69,6 +121,21 @@ if result.ok:
 else:
     print(f"Error: {result.error}")
 ```
+
+### Shared Setup for Remaining Examples
+To keep later snippets short, assume this setup:
+
+```python
+from functools import partial
+from safe_py_runner import LocalEngine, run_code as _run_code
+
+engine = LocalEngine(venv_dir="/absolute/path/to/your/project/.venv", venv_manager="uv")
+run_code = partial(_run_code, engine=engine)
+```
+
+Important:
+- Pass the full path to the virtual environment folder itself (for example `/repo/.venv`), not just the parent project directory.
+- If `uv` is not installed, use `venv_manager="python"` and the engine will create the venv using `python -m venv`.
 
 ## Advanced Configuration
 
@@ -273,28 +340,42 @@ Pass one or the other to `run_code`, not both.
 
 `run_code(...)` parameters:
 - `code`: Python code string to execute.
+- `engine`: required engine instance (`LocalEngine` or `DockerEngine`).
 - `input_data`: optional dictionary available as `input_data` and key-injected globals.
 - `policy`: optional `RunnerPolicy` object.
 - `policy_file`: optional path to TOML policy config.
-- `python_executable`: optional Python interpreter path.
 
 `RunnerResult` fields:
 - `ok`, `result`, `stdout`, `stderr`, `timed_out`, `resource_exceeded`, `error`, `exit_code`.
 
 ### Using a Custom Python Environment
-By default, `safe-py-runner` uses `sys.executable` (the same Python running your app).
-To improve isolation or provide specific libraries to the runner, creating a dedicated virtual environment is recommended:
-
-1. Create a venv: `python -m venv runner_env`
-2. Install allowed packages: `runner_env/bin/pip install pandas numpy`
-3. Pass the path to `run_code`:
+Use `LocalEngine(venv_dir=...)` to create/reuse an isolated virtual environment:
 
 ```python
+from safe_py_runner import LocalEngine, run_code
+
+engine = LocalEngine(
+    venv_dir="/path/to/project/.venv",
+    venv_manager="uv",
+    packages=["pandas==2.2.2"],
+)
+
 run_code(
     code="...",
-    python_executable="/path/to/runner_env/bin/python"
+    engine=engine,
 )
 ```
+
+### Docker Engine Recommendation
+For production multi-user workloads, prefer `DockerEngine`.
+It gives stronger OS-level isolation than local subprocess execution.
+
+Docker Desktop:
+- macOS/Windows: https://www.docker.com/products/docker-desktop/
+- Linux Engine docs: https://docs.docker.com/engine/install/
+
+Remote daemon support is available through DockerEngine options:
+`docker_context`, `docker_host`, `ssh_host`, `ssh_user`, `ssh_port`, and `ssh_key_path`.
 
 ## Security Note
 
